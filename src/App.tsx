@@ -55,10 +55,12 @@ function buildReason(check: BookingCheck, startMin: number, endMin: number): str
   switch (check.code) {
     case BOOKING_REASON.OK:
       return `Available for a ${endMin - startMin}-minute booking from ${minutesToTime(startMin)} to ${minutesToTime(endMin)}.`;
+    case BOOKING_REASON.BLOCKED: // CHANGED: new message
+      return 'The room is blocked and cannot be booked.';
     case BOOKING_REASON.INVALID_RANGE:
       return 'Start time must be earlier than end time.';
-    case BOOKING_REASON.IN_PAST:
-      return `Start time must be after the current time (${NOW_LABEL} — ${minutesToTime(NOW_MINUTES)}).`;
+    case BOOKING_REASON.IN_PAST: // CHANGED: time shown once
+      return `Start time must be after the current time (${NOW_LABEL}).`;
     case BOOKING_REASON.END_OF_DAY:
       return 'End time exceeds 24:00 (1440 minutes). Please use a valid time.';
     case BOOKING_REASON.TOO_LONG:
@@ -73,6 +75,7 @@ function buildReason(check: BookingCheck, startMin: number, endMin: number): str
 function App() {
   const [startStr, setStartStr] = useState('11:00');
   const [endStr, setEndStr] = useState('12:00');
+  const [blocked, setBlocked] = useState(false); // CHANGED: hook moved to top level
   const [errors, setErrors] = useState<FieldErrors>({});
   const [result, setResult] = useState<CheckResult | null>(null);
 
@@ -97,7 +100,7 @@ function App() {
       start: s,
       end: e,
       now: NOW_MINUTES,
-      blocked: false,
+      blocked, // CHANGED: from state
       bookings: [SAMPLE_BOOKING],
     });
 
@@ -178,6 +181,24 @@ function App() {
                 Start must be after this. Maximum booking duration is 120 minutes.
               </p>
             </div>
+
+            {/* CHANGED: room blocked checkbox */}
+            <label
+              htmlFor="room-blocked"
+              className="mt-4 flex items-center gap-2 text-sm font-medium text-slate-700"
+            >
+              <input
+                id="room-blocked"
+                type="checkbox"
+                checked={blocked}
+                onChange={(e) => {
+                  setBlocked(e.target.checked);
+                  setResult(null);
+                }}
+                className="h-4 w-4 rounded border-slate-300"
+              />
+              Room blocked
+            </label>
 
             {duration !== null && duration > MAX_DURATION_MINUTES && (
               <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
